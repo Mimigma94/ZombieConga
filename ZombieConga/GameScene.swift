@@ -22,6 +22,7 @@ class GameScene: SKScene {
     var velocity = CGPoint.zero
     let background = SKSpriteNode(imageNamed: "background1")
     let playableRect: CGRect
+    let zombieRotateRadiansPerSec: CGFloat = 4.0 * π
     
     //--------------------------------------------------
     // MARK: - Lifecycle
@@ -50,6 +51,7 @@ class GameScene: SKScene {
         zombie.position = CGPoint(x: 400, y: 400)
         //  zombie.setScale(2.0)
         addChild(zombie)
+        spawnEnemy()
         
         let mySize = background.size
         print("Size: \(mySize)")
@@ -66,7 +68,7 @@ class GameScene: SKScene {
         print("\(dt*1000) milliseconds since last update")
         move(sprite: zombie, velocity: velocity)
         boundsCheckZombie()
-        rotateZombie(sprite: zombie, direction: velocity)
+        rotateZombie(sprite: zombie, direction: velocity, rotateRadiansPerSec: zombieRotateRadiansPerSec)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -137,7 +139,20 @@ class GameScene: SKScene {
         addChild(shape)
     }
     
-    func rotateZombie(sprite: SKSpriteNode, direction: CGPoint) {
-        sprite.zRotation = atan2(direction.y, direction.x)
+    func rotateZombie(sprite: SKSpriteNode, direction: CGPoint, rotateRadiansPerSec: CGFloat) {
+        let shortest = shortestAngleBetween(angle1: sprite.zRotation, angle2: velocity.angle)
+        let amountToRotate = min(rotateRadiansPerSec * CGFloat(dt), abs(shortest))
+        sprite.zRotation += shortest.sign() * amountToRotate
     }
+    
+    func spawnEnemy() {
+        let enemy = SKSpriteNode(imageNamed: "enemy")
+        enemy.position = CGPoint(x: size.width + enemy.size.width/2, y: size.height/2)
+        addChild(enemy)
+        
+        // sprite bewegen von a nach b in einer bestimmten Zeit
+        let actionMove = SKAction.move(to: CGPoint(x: -enemy.size.width/2, y: enemy.position.y), duration: 2.0)
+        enemy.run(actionMove)
+    }
+    
 }
