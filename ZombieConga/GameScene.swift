@@ -20,9 +20,10 @@ class GameScene: SKScene {
     var dt: TimeInterval = 0
     let zombieMovePointsPerSec: CGFloat = 480.0
     var velocity = CGPoint.zero
+    let zombieRotateRadiansPerSec: CGFloat = 4.0 * π
+    
     let background = SKSpriteNode(imageNamed: "background1")
     let playableRect: CGRect
-    let zombieRotateRadiansPerSec: CGFloat = 4.0 * π
     
     //--------------------------------------------------
     // MARK: - Lifecycle
@@ -65,7 +66,6 @@ class GameScene: SKScene {
             dt = 0
         }
         lastUpdateTime = currentTime
-        print("\(dt*1000) milliseconds since last update")
         move(sprite: zombie, velocity: velocity)
         boundsCheckZombie()
         rotateZombie(sprite: zombie, direction: velocity, rotateRadiansPerSec: zombieRotateRadiansPerSec)
@@ -98,7 +98,7 @@ class GameScene: SKScene {
     func move(sprite: SKSpriteNode, velocity: CGPoint) {
         //1.
         let amountToMove = CGPoint(x: velocity.x * CGFloat(dt), y: velocity.y * CGFloat(dt))
-        print("Amount to move: \(amountToMove)")
+        
         //2.
         sprite.position = CGPoint(x: sprite.position.x + amountToMove.x, y: sprite.position.y + amountToMove.y)
     }
@@ -150,9 +150,24 @@ class GameScene: SKScene {
         enemy.position = CGPoint(x: size.width + enemy.size.width/2, y: size.height/2)
         addChild(enemy)
         
-        // sprite bewegen von a nach b in einer bestimmten Zeit
-        let actionMove = SKAction.move(to: CGPoint(x: -enemy.size.width/2, y: enemy.position.y), duration: 2.0)
-        enemy.run(actionMove)
+        // sprite bewegen von a nach b in einer bestimmten Zeit -->
+        //let actionMove = SKAction.move(to: CGPoint(x: -enemy.size.width/2, y: enemy.position.y), duration: 2.0)
+        //enemy.run(actionMove)
+        let actionMidMove = SKAction.moveBy(x: -size.width/2 - enemy.size.width/2, y: -playableRect.height/2 + enemy.size.height/2, duration: 1.0) //1
+        
+        let actionMove = SKAction.moveBy(x: -size.width/2 - enemy.size.width/2, y: playableRect.height/2 - enemy.size.height/2,duration: 1.0) //2
+        
+        let wait = SKAction.wait(forDuration: 0.25)
+        
+        let logMessage = SKAction.run() {
+            print("Reached bottom!")
+        }
+        
+        let halfSequence = SKAction.sequence([actionMidMove, logMessage, wait, actionMove])
+        let sequence = SKAction.sequence([halfSequence, halfSequence.reversed()]) //3
+        
+        let repeatAction = SKAction.repeatForever(sequence)
+        enemy.run(repeatAction)
     }
     
 }
