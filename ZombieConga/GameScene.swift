@@ -21,6 +21,7 @@ class GameScene: SKScene {
     let zombieMovePointsPerSec: CGFloat = 480.0
     var velocity = CGPoint.zero
     let zombieRotateRadiansPerSec: CGFloat = 4.0 * π
+    let zombieAnimation: SKAction
     
     let background = SKSpriteNode(imageNamed: "background1")
     let playableRect: CGRect
@@ -35,6 +36,15 @@ class GameScene: SKScene {
         let playableHeight = size.width / maxAspectRatio //2
         let playableMargin = (size.height-playableHeight)/2 //3
         playableRect = CGRect(x: 0, y: playableMargin, width: size.width, height: playableHeight) //4
+        
+        var textures: [SKTexture] = []
+        for i in 1...4 {
+            textures.append(SKTexture(imageNamed: "zombie\(i)"))
+        }
+        textures.append(textures[2])
+        textures.append(textures[3])
+        
+        zombieAnimation = SKAction.animate(with: textures, timePerFrame: 0.1)
         super.init(size: size) //5
     }
     
@@ -52,7 +62,16 @@ class GameScene: SKScene {
         zombie.position = CGPoint(x: 400, y: 400)
         //  zombie.setScale(2.0)
         addChild(zombie)
-        spawnEnemy()
+        //zombie.run(SKAction.repeatForever(zombieAnimation))
+        run(SKAction.repeatForever(
+            SKAction.sequence([SKAction.run() { [weak self] in self?.spawnEnemy()
+                },
+                SKAction.wait(forDuration: 2.0)])))
+        
+        run(SKAction.repeatForever(
+            SKAction.sequence([SKAction.run() { [weak self] in self?.spawnCat()
+        },
+        SKAction.wait(forDuration: 1.0)])))
         
         let mySize = background.size
         print("Size: \(mySize)")
@@ -104,6 +123,7 @@ class GameScene: SKScene {
     }
     
     func moveZombieToward(location: CGPoint) {
+        startZombieAnimation()
         let offset = CGPoint(x: location.x - zombie.position.x, y: location.y - zombie.position.y)
         let lenght = sqrt(Double(offset.x * offset.x + offset.y * offset.y))
         let direction = CGPoint(x: offset.x / CGFloat(lenght), y: offset.y / CGFloat(lenght))
@@ -147,27 +167,44 @@ class GameScene: SKScene {
     
     func spawnEnemy() {
         let enemy = SKSpriteNode(imageNamed: "enemy")
-        enemy.position = CGPoint(x: size.width + enemy.size.width/2, y: size.height/2)
+        
+        enemy.position = CGPoint(
+            x: size.width + enemy.size.width/2,
+            y: CGFloat.random(
+                min: playableRect.minY + enemy.size.height/2,
+                max: playableRect.maxY - enemy.size.height/2))
         addChild(enemy)
         
-        // sprite bewegen von a nach b in einer bestimmten Zeit -->
-        //let actionMove = SKAction.move(to: CGPoint(x: -enemy.size.width/2, y: enemy.position.y), duration: 2.0)
-        //enemy.run(actionMove)
-        let actionMidMove = SKAction.moveBy(x: -size.width/2 - enemy.size.width/2, y: -playableRect.height/2 + enemy.size.height/2, duration: 1.0) //1
-        
-        let actionMove = SKAction.moveBy(x: -size.width/2 - enemy.size.width/2, y: playableRect.height/2 - enemy.size.height/2,duration: 1.0) //2
-        
-        let wait = SKAction.wait(forDuration: 0.25)
-        
-        let logMessage = SKAction.run() {
-            print("Reached bottom!")
-        }
-        
-        let halfSequence = SKAction.sequence([actionMidMove, logMessage, wait, actionMove])
-        let sequence = SKAction.sequence([halfSequence, halfSequence.reversed()]) //3
-        
-        let repeatAction = SKAction.repeatForever(sequence)
-        enemy.run(repeatAction)
+        let actionMove = SKAction.moveTo(x: -enemy.size.width/2, duration: 2.0)
+        let actionRemove = SKAction.removeFromParent()
+        enemy.run(SKAction.sequence([actionMove, actionRemove]))
     }
     
+    func startZombieAnimation() {
+        if zombie.action(forKey: "animation") == nil {
+            zombie.run(
+                SKAction.repeatForever(zombieAnimation), withKey: "animation")
+        }
+    }
+    
+    func stopZombieAnimation() {
+        zombie.removeAction(forKey: "animation")
+    }
+    
+    func spawnCat() {
+        let cat = SKSpriteNode(imageNamed: "cat")
+        
+        cat.position = CGPoint(
+            x: CGFloat.random(min: playableRect.minX, max: playableRect.maxX),
+            y: CGFloat.random(min: playableRect.minY, max: playableRect.maxY))
+        cat.setScale(0)
+        addChild(cat)
+        
+        let appear = SKAction.scale(to: 1.0, duration: 0.5)
+        let wait = SKAction.wait(forDuration: 10.0)
+        let disappear = SKAction.scale(to: 0, duration: 0.5)
+        let removeFromParent = SKAction.removeFromParent()
+        let actions = [appear, wait, disappear, removeFromParent]
+        cat.run(SKAction.sequence(actions))
+    }
 }

@@ -98,3 +98,15 @@ extension CGPoint {
         return atan2(y, x)
     }
 }
+
+extension CGFloat {
+    // Gives a random numer between 0 and 1
+    static func random() -> CGFloat {
+        return CGFloat(Float(arc4random()) / Float(UInt32.max))
+    }
+    // gives a random number between a specified minimum and maximum value
+    static func random(min: CGFloat, max: CGFloat) -> CGFloat {
+        assert(min < max)
+        return CGFloat.random() * (max - min) + min
+    }
+}
