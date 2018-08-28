@@ -73,16 +73,11 @@ func shortestAngleBetween(angle1: CGFloat, angle2: CGFloat) -> CGFloat {
     return angle
 }
 
-let zombieRotateRadiansPerSec: CGFloat = 4.0 * π
-
 extension CGFloat {
     func sign() -> CGFloat {
         return self >= 0.0 ? 1.0 : -1.0
     }
 }
-
-
-
 
 extension CGPoint {
     
@@ -104,6 +99,7 @@ extension CGFloat {
     static func random() -> CGFloat {
         return CGFloat(Float(arc4random()) / Float(UInt32.max))
     }
+    
     // gives a random number between a specified minimum and maximum value
     static func random(min: CGFloat, max: CGFloat) -> CGFloat {
         assert(min < max)
